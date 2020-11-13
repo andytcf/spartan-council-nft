@@ -1,0 +1,12 @@
+{
+  "name": "spartancouncil",
+  "version": "1.0.0",
+  "license": "MIT",
+  "author": "andytcf",
+  "description": "Implementation of the ERC721 standard to create a custom DAO owned NFT",
+  "scripts": {},
+  "devDependencies": {},
+  "dependencies": {
+    "@openzeppelin/contracts": "3.2.0"
+  }
+}
