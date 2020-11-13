@@ -7,6 +7,6 @@
   "scripts": {},
   "devDependencies": {},
   "dependencies": {
-    "@openzeppelin/contracts": "3.2.0"
+    "openzeppelin-solidity-2.3.0": "npm:openzeppelin-solidity@2.3.0"
   }
 }
