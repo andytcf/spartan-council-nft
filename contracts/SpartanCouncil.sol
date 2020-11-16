@@ -51,7 +51,11 @@ contract SpartanCouncil is IERC721, IERC721Metadata, ERC165, Ownable {
      */
     function balanceOf(address owner) public view returns (uint256) {
         require(owner != address(0), "ERC721: balance query for the zero address");
-        return tokenOwned[owner];
+        if(tokenOwned[owner] > 0) {
+            return 1;
+        } else {
+            return 0;
+        }
     }
 
     /**
@@ -89,6 +93,7 @@ contract SpartanCouncil is IERC721, IERC721Metadata, ERC165, Ownable {
         onlyOwner 
         isValidAddress(to) 
     {
+        require(tokenId != 0, "Token ID must be greater than 0");
         require(tokenOwner[tokenId] == address(0), "ERC721: token already minted");
 
         tokens.push(tokenId);

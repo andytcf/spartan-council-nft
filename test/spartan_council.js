@@ -63,6 +63,14 @@ contract("SpartanCouncil", (accounts) => {
         "Ownable: caller is not the owner."
       );
     });
+    it("should prevent minting with tokenId as 0", async () => {
+      await expectRevert(
+        spartanCouncil.mint(receiver, new BN(0), {
+          from: ownerAddress,
+        }),
+        "Token ID must be greater than 0"
+      );
+    });
     it("should allow minting with tokenId as string", async () => {
       const tx = await spartanCouncil.mint(receiver, "1234", {
         from: ownerAddress,
