@@ -15,14 +15,16 @@ contract SpartanCouncil is IERC721, IERC721Metadata, ERC165, Ownable {
     event Mint(uint256 tokenId, address to);
     // Event that is emitted when an existing SpartanCouncil token is burned
     event Burn(uint256 tokenId);
+    // Event that is emitted when an metadata is added
+    event MetadataChanged(uint256 tokenId, string tokenURI);
     // Array of token ids
     uint256[] public tokens;
     // Map between a owner and their token
-    mapping (address => uint256) internal tokenOwned;
+    mapping (address => uint256) public tokenOwned;
     // Maps a token to the owner address
-    mapping (uint256 => address) internal tokenOwner;
+    mapping (uint256 => address) public tokenOwner;
     // Optional mapping for token URIs
-    mapping (uint256 => string) private tokenURIs;
+    mapping (uint256 => string) public tokenURIs;
     // Token name
     string public name;
     // Token symbol
@@ -82,8 +84,12 @@ contract SpartanCouncil is IERC721, IERC721Metadata, ERC165, Ownable {
     /**
      * @dev Mint function to mint a new token and assign it to an address
      */
-    function mint(address to, uint256 tokenId) public onlyOwner isValidAddress(to) {
-        require(tokens[tokenId] == 0, "ERC721: token already minted");
+    function mint(address to, uint256 tokenId) 
+        public 
+        onlyOwner 
+        isValidAddress(to) 
+    {
+        require(tokenOwner[tokenId] == address(0), "ERC721: token already minted");
 
         tokens.push(tokenId);
         tokenOwned[to] = tokenId;
@@ -96,14 +102,20 @@ contract SpartanCouncil is IERC721, IERC721Metadata, ERC165, Ownable {
      * @dev Burn function to burn an exisitng token
      */
     function burn(uint256 tokenId) public onlyOwner {
-        require(tokens[tokenId] != 0, "ERC721: token does not exist");
+        require(tokenOwner[tokenId] != address(0), "ERC721: token does not exist");
 
         address previousOwner = tokenOwner[tokenId];
 
         tokenOwned[previousOwner] = 0;
         tokenOwner[tokenId] = address(0);
 
-        tokens[tokenId] = tokens[tokens.length - 1];
+        uint256 lastElement = tokens[tokens.length - 1];
+        
+        for(uint256 i = 0; i < tokens.length; i++) {
+            if(tokens[i] == tokenId) {
+                tokens[i] = lastElement;
+            }
+        }    
 
         tokens.pop;
 
@@ -125,24 +137,30 @@ contract SpartanCouncil is IERC721, IERC721Metadata, ERC165, Ownable {
     /**
      * @dev See {IERC721Metadata-tokenURI}.
      */
-    function tokenURI(uint256 tokenId) public view returns (string memory) {
-        require(tokens[tokenId] != 0, "ERC721: token does not exist");
-
+    function tokenURI(uint256 tokenId) 
+        public 
+        view 
+        returns (string memory) 
+    {
+        require(tokenOwner[tokenId] != address(0), "ERC721: token does not exist");
         string memory _tokenURI = tokenURIs[tokenId];
-
         return _tokenURI;
     }
 
+    
     /**
-     * @dev Sets `_tokenURI` as the tokenURI of `tokenId`.
-     *
-     * Requirements:
-     *
-     * - `tokenId` must exist.
+     * @dev Internal function to set the token URI for a given token.
+     * Reverts if the token ID does not exist.
+     * @param tokenId uint256 ID of the token to set its URI
+     * @param uri string URI to assign
      */
-    function _setTokenURI(uint256 tokenId, string memory _tokenURI) internal {
-        require(tokens[tokenId] != 0, "ERC721: token does not exist");
-        tokenURIs[tokenId] = _tokenURI;
+    function setTokenURI(uint256 tokenId, string memory uri) 
+        public 
+        onlyOwner 
+    {
+        require(tokenOwner[tokenId] != address(0), "ERC721: token does not exist");
+        tokenURIs[tokenId] = uri;
+        emit MetadataChanged(tokenId, uri);
     }
 
     // Stub functions not implemented to conform to ERC721 standard
