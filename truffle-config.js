@@ -42,11 +42,20 @@ module.exports = {
     ropsten: {
       provider: () => {
         return new HDWalletProvider(
-          process.env["KOVAN_PRIVATE_KEY"],
+          process.env["MNEMONIC"],
           `https://ropsten.infura.io/v3/${process.env["INFURA_API"]}`
         );
       },
       network_id: 3,
+    },
+    rinkeby: {
+      provider: () => {
+        return new HDWalletProvider(
+          process.env["MNEMONIC"],
+          `https://rinkeby.infura.io/v3/${process.env["INFURA_API"]}`
+        );
+      },
+      network_id: 4,
     },
     // Useful for testing. The `development` name is special - truffle uses it by default
     // if it's defined here and no other network is specified at the command line.

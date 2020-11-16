@@ -2,6 +2,9 @@
 
 This SIP proposes to supersede the current SCCP signaling process outlined in (SIP-90), with an extended version that features a delegated voting system. Delegated voting is more in line with the preexisting Synthetix Governance framework on discord whilst also providing the benefits of snapshot voting.
 
+## Utils
+
+Verify: truffle run verify [ContractName] --network [networkName]
 
 ## Contract Address
 
@@ -12,4 +15,3 @@ Ropsten: https://ropsten.etherscan.io/address/0xb5236979738F1A9305D97b836c721236
 ### V2
 
 Rinkeby: https://rinkeby.etherscan.io/address/0xb5236979738f1a9305d97b836c72123653fca681
-
