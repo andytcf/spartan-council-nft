@@ -10,9 +10,12 @@
   },
   "devDependencies": {
     "@openzeppelin/test-helpers": "^0.5.9",
+    "dotenv": "^8.2.0",
     "solidity-coverage": "^0.7.11"
   },
   "dependencies": {
-    "openzeppelin-solidity-2.3.0": "npm:openzeppelin-solidity@2.3.0"
+    "@truffle/hdwallet-provider": "^1.2.0",
+    "openzeppelin-solidity-2.3.0": "npm:openzeppelin-solidity@2.3.0",
+    "truffle-plugin-verify": "^0.5.0"
   }
 }

@@ -1,3 +1,6 @@
+const HDWalletProvider = require("@truffle/hdwallet-provider");
+require("dotenv").config();
+
 /**
  * Use this file to configure your truffle project. It's seeded with some
  * common settings for different networks and features like migrations,
@@ -36,6 +39,15 @@ module.exports = {
    */
 
   networks: {
+    ropsten: {
+      provider: () => {
+        return new HDWalletProvider(
+          process.env["KOVAN_PRIVATE_KEY"],
+          `https://ropsten.infura.io/v3/${process.env["INFURA_API"]}`
+        );
+      },
+      network_id: 3,
+    },
     // Useful for testing. The `development` name is special - truffle uses it by default
     // if it's defined here and no other network is specified at the command line.
     // You should run a client (like ganache-cli, geth or parity) in a separate terminal
@@ -93,5 +105,8 @@ module.exports = {
       // }
     },
   },
-  plugins: ["solidity-coverage"],
+  plugins: ["solidity-coverage", "truffle-plugin-verify"],
+  api_keys: {
+    etherscan: process.env["ETHERSCAN_API"],
+  },
 };
