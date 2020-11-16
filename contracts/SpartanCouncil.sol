@@ -2,48 +2,43 @@ pragma solidity ^0.5.16;
 
 import "openzeppelin-solidity-2.3.0/contracts/introspection/ERC165.sol";
 import "openzeppelin-solidity-2.3.0/contracts/token/ERC721/IERC721.sol";
-import "openzeppelin-solidity-2.3.0/contracts/utils/Address.sol";
-
+import "openzeppelin-solidity-2.3.0/contracts/token/ERC721/ERC721Metadata.sol";
+import "openzeppelin-solidity-2.3.0/contracts/ownership/Ownable.sol";
 
 /**
  * @title ERC721 Non-Fungible Token Standard basic implementation
  * @dev see https://eips.ethereum.org/EIPS/eip-721
  */
-contract SpartanCouncil is IERC721, ERC165 {
-    using Address for address;
+contract SpartanCouncil is IERC721, IERC721Metadata, ERC165, Ownable {
 
+    // Event that is emitted when a new SpartanCouncil token is minted
     event Mint(uint256 tokenId, address to);
+    // Event that is emitted when an existing SpartanCouncil token is burned
     event Burn(uint256 tokenId);
-
-    mapping(address => uint256) private _holderTokens;
-
-    mapping(uint256 => address) private _tokenOwners;
-
-    uint256 public tokenCount;
-
+    // Array of token ids
+    uint256[] public tokens;
+    // Map between a owner and their token
+    mapping (address => uint256) internal tokenOwned;
+    // Maps a token to the owner address
+    mapping (uint256 => address) internal tokenOwner;
+    // Optional mapping for token URIs
+    mapping (uint256 => string) private tokenURIs;
     // Token name
-    string private _name;
-
+    string public name;
     // Token symbol
-    string private _symbol;
-
-    // NFT Super Owner
-    address private _superOwner;
+    string public symbol;
 
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
      */
-    constructor(string memory name, string memory symbol) public {
-        _name = name;
-        _symbol = symbol;
-        _superOwner = msg.sender;
+    constructor(string memory _name, string memory _symbol) public {
+        name = _name;
+        symbol = _symbol;
     }
 
-    modifier isSuperOwner() {
-        require(msg.sender == _superOwner, "Sender is not the super owner");
-        _;
-    }
-
+    /**
+     * @dev Modifier to check that an address is not the "0" address
+     */
     modifier isValidAddress(address to) {
         require(to != address(0), "ERC721: transfer to the zero address");
         _;
@@ -54,16 +49,103 @@ contract SpartanCouncil is IERC721, ERC165 {
      */
     function balanceOf(address owner) public view returns (uint256) {
         require(owner != address(0), "ERC721: balance query for the zero address");
-        return _holderTokens[owner];
+        return tokenOwned[owner];
     }
 
     /**
      * @dev See {IERC721-ownerOf}.
      */
     function ownerOf(uint256 tokenId) public view returns (address) {
-        return _tokenOwners[tokenId];
+        return tokenOwner[tokenId];
     }
 
+    /**
+     * @dev Transfer function to move a specified token to another address, only callable by the Owner.
+     */
+    function transfer(
+        address from,
+        address to,
+        uint256 tokenId
+    ) public isValidAddress(to) onlyOwner {
+        require(tokenOwned[to] == 0, "Destination address already owns a token");
+        require(from != to, "Cannot transfer token to own wallet");
+
+        tokenOwned[from] = 0;
+        tokenOwned[to] = tokenId;
+
+        tokenOwner[tokenId] = to; 
+
+        emit Transfer(from, to, tokenId);
+    }
+
+
+    /**
+     * @dev Mint function to mint a new token and assign it to an address
+     */
+    function mint(address to, uint256 tokenId) public onlyOwner isValidAddress(to) {
+        require(tokens[tokenId] == 0, "ERC721: token already minted");
+
+        tokens.push(tokenId);
+        tokenOwned[to] = tokenId;
+        tokenOwner[tokenId] = to;
+
+        emit Mint(tokenId, to);
+    }
+
+    /**
+     * @dev Burn function to burn an exisitng token
+     */
+    function burn(uint256 tokenId) public onlyOwner {
+        require(tokens[tokenId] != 0, "ERC721: token does not exist");
+
+        address previousOwner = tokenOwner[tokenId];
+
+        tokenOwned[previousOwner] = 0;
+        tokenOwner[tokenId] = address(0);
+
+        tokens[tokenId] = tokens[tokens.length - 1];
+
+        tokens.pop;
+
+        // Clear metadata (if any)
+        if (bytes(tokenURIs[tokenId]).length != 0) {
+            delete tokenURIs[tokenId];
+        }
+
+        emit Burn(tokenId);
+    }
+
+    /**
+     * @dev Total supply function to retrieve total tokens currently available
+     */
+    function totalSupply() public view returns (uint256) {
+        return tokens.length;
+    }
+
+    /**
+     * @dev See {IERC721Metadata-tokenURI}.
+     */
+    function tokenURI(uint256 tokenId) public view returns (string memory) {
+        require(tokens[tokenId] != 0, "ERC721: token does not exist");
+
+        string memory _tokenURI = tokenURIs[tokenId];
+
+        return _tokenURI;
+    }
+
+    /**
+     * @dev Sets `_tokenURI` as the tokenURI of `tokenId`.
+     *
+     * Requirements:
+     *
+     * - `tokenId` must exist.
+     */
+    function _setTokenURI(uint256 tokenId, string memory _tokenURI) internal {
+        require(tokens[tokenId] != 0, "ERC721: token does not exist");
+        tokenURIs[tokenId] = _tokenURI;
+    }
+
+    // Stub functions not implemented to conform to ERC721 standard
     /**
      * @dev See {IERC721-safeTransferFrom}.
      */
@@ -111,47 +193,4 @@ contract SpartanCouncil is IERC721, ERC165 {
      * @dev See {IERC721-setApprovalForAll}.
      */
     function setApprovalForAll(address operator, bool approved) public {}
-
-    function transfer(
-        address from,
-        address to,
-        uint256 tokenId
-    ) public isSuperOwner() isValidAddress(to) {
-        delete _holderTokens[from];
-        _holderTokens[to] = tokenId;
-
-        _tokenOwners[tokenId] = to;
-
-        emit Transfer(from, to, tokenId);
-    }
-
-    function mint(address to, uint256 tokenId) public isSuperOwner() isValidAddress(to) {
-        require(tokenId != tokenCount, "ERC721: token already minted");
-
-        _holderTokens[to] = tokenId;
-
-        tokenCount += 1;
-
-        _tokenOwners[tokenId] = to;
-
-        emit Mint(tokenId, to);
-    }
-
-    function burn(uint256 tokenId) public isSuperOwner() {
-        require(tokenId == tokenCount, "ERC721: token does not exist");
-
-        address previousOwner = _tokenOwners[tokenId];
-
-        delete _holderTokens[previousOwner];
-
-        delete _tokenOwners[tokenId];
-
-        tokenCount -= 1;
-
-        emit Burn(tokenId);
-    }
-
-    function totalSupply() public view returns (uint256) {
-        return tokenCount;
-    }
 }
